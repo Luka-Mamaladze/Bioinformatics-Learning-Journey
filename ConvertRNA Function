@@ -1,0 +1,70 @@
+convertRNA <- function(seq){
+  seq <- toupper(seq)
+  
+  if (!is.character(seq)){
+    stop("Error: The input must be a character string.")
+  }
+  
+  if (nchar(seq) < 3) {
+    stop("Error: The input sequence must have a minimum length of 3.")
+  }
+  
+  if (grepl("\\s", seq)){
+    stop("Error: The input sequence must not contain whitespace.")
+  }
+  
+  if (nchar(seq) %% 3 != 0){
+   stop("Error: Sequence provided is not divisible by 3.") 
+  }
+  
+  if (grepl("N", seq, ignore.case =  T)){
+    stop("Error: The input cannot contain unknown bases (N).")
+  }
+  if (!grepl("^[ACUG]*$", seq)) {
+    stop("Error: The input sequence must only contain the characters 'A', 'C', 'U', and 'G'.")
+  }
+  # Split the sequence into a list
+  codons <- regmatches(seq, gregexpr("...", seq))
+  # Turn the list into a vector
+  codons <- unlist(codons, use.names = F)
+  
+  valid_codons <- c("UUU", "UUC", "UUA", "UUG", "CUU", "CUC", "CUA", "CUG", "AUU", "AUC",
+                    "AUA", "AUG", "GUU", "GUC", "GUA", "GUG", "UCU", "UCC", "UCA", "UCG",
+                    "CCU", "CCC", "CCA", "CCG", "ACU", "ACC", "ACA", "ACG", "GCU", "GCC",
+                    "GCA", "GCG", "UAU", "UAC", "UAA", "UAG", "CAU", "CAC", "CAA", "CAG", 
+                    "AAU", "AAC", "AAA", "AAG", "GAU", "GAC", "GAA", "GAG", "UGU", "UGC", 
+                    "UGA", "UGG", "CGU", "CGC", "CGA", "CGG", "AGU", "AGC", "AGA", "AGG", 
+                    "GGU", "GGC", "GGA", "GGG")
+  
+  for (i in 1:length(codons)){
+    if(!codons[i] %in% valid_codons){
+      stop(paste("Error: Invalid codon found - ", codons[i]))
+    }
+  }
+  
+  # Replace the RNA sequence with an amino acid in the provided string
+  codons <- gsub("UUU|UUC", "F", codons)
+  codons <- gsub("UUA|UUG|CUU|CUC|CUA|CUG", "L", codons)
+  codons <- gsub("AUU|AUC|AUA", "I", codons)
+  codons <- gsub("AUG", "M", codons)
+  codons <- gsub("GUU|GUC|GUA|GUG", "V", codons)
+  codons <- gsub("UCU|UCC|UCA|UCG|AGU|AGC", "S", codons)
+  codons <- gsub("CCU|CCC|CCA|CCG", "P", codons)
+  codons <- gsub("ACU|ACC|ACA|ACG", "T", codons)
+  codons <- gsub("GCU|GCC|GCA|GCG", "A", codons)
+  codons <- gsub("UAU|UAC", "Y", codons)
+  codons <- gsub("UAA|UAG|UGA", "X", codons)
+  codons <- gsub("CAU|CAC", "H", codons)
+  codons <- gsub("CAA|CAG", "Q", codons)
+  codons <- gsub("AAU|AAC", "N", codons)
+  codons <- gsub("AAA|AAG", "K", codons)
+  codons <- gsub("GAU|GAC", "D", codons)
+  codons <- gsub("GAA|GAG", "E", codons)
+  codons <- gsub("UGU|UGC", "C", codons)
+  codons <- gsub("UGG", "W", codons)
+  codons <- gsub("CGU|CGC|CGA|CGG|AGA|AGG", "R", codons)
+  codons <- gsub("GGU|GGC|GGA|GGG", "G", codons)
+  
+  # This combines all the amino acids into one string
+  codons <- paste(codons, collapse = "")
+}
