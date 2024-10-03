@@ -1,0 +1,1 @@
+I want to showcase what I've learned in R and bioinformatics. This repository will serve that purpose. All small projects which are involved in furthering my knowledge will be posted here. Bigger projects will have their own repositories.
