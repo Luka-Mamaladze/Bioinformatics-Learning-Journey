@@ -1,0 +1,137 @@
+############################## Q1 ######################################
+
+# Let's import the data
+parp_dataset <- read.csv("Assignment_1_dataset.csv")
+
+# Let's check the data was imported correctly...
+colnames(parp_dataset)
+class(parp_dataset)
+dim(parp_dataset)
+head(parp_dataset)
+tail(parp_dataset)
+names(parp_dataset)
+attach(parp_dataset)
+
+# Let's summarise the statistics of the data...
+by(parp_dataset[, c("PD.1_pre", "PD.L1_pre", "CTLA.4_pre", "SIRP_pre")], 
+   Treatment_Arm, 
+   summary)
+
+IQR(PD.1_pre[Treatment_Arm=="niraparib"])
+IQR(PD.1_pre[Treatment_Arm=="Rucaparib"])
+var.test(PD.1_pre ~ Treatment_Arm)
+
+IQR(PD.L1_pre[Treatment_Arm=="niraparib"])
+IQR(PD.L1_pre[Treatment_Arm=="Rucaparib"])
+var.test(PD.L1_pre ~ Treatment_Arm)
+
+IQR(CTLA.4_pre[Treatment_Arm=="niraparib"])
+IQR(CTLA.4_pre[Treatment_Arm=="Rucaparib"])
+var.test(CTLA.4_pre ~ Treatment_Arm)
+
+IQR(SIRP_pre[Treatment_Arm=="niraparib"])
+IQR(SIRP_pre[Treatment_Arm=="Rucaparib"])
+var.test(SIRP_pre ~ Treatment_Arm)
+
+# Let's visualise what the protein expression looks like...
+#PD1
+par(mfrow = c(1,4))
+hist(PD.1_pre[Treatment_Arm=="niraparib"], main = "PD.1_pre (Niraparib)")
+hist(PD.1_pre[Treatment_Arm=="Rucaparib"], main = "PD.1_pre (Rucaparib)")
+
+qqnorm(PD.1_pre[Treatment_Arm=="niraparib"], main = "PD.1_pre (Niraparib)")
+qqline(PD.1_pre[Treatment_Arm=="niraparib"])
+qqnorm(PD.1_pre[Treatment_Arm=="Rucaparib"], main = "PD.1_pre (Rucaparib)")
+qqline(PD.1_pre[Treatment_Arm=="Rucaparib"])
+
+boxplot(PD.1_pre ~ Treatment_Arm)
+
+plot(density(PD.1_pre[Treatment_Arm=="niraparib"]), main = "PD.1_pre (Niraparib)")
+plot(density(PD.1_pre[Treatment_Arm=="Rucaparib"]), main = "PD.1_pre (Rucaparib)")
+
+# PDL1
+hist(PD.L1_pre[Treatment_Arm=="niraparib"], main = "PD.L1_pre (Niraparib)")
+hist(PD.L1_pre[Treatment_Arm=="Rucaparib"], main = "PD.L1_pre (Rucaparib)")
+
+qqnorm(PD.L1_pre[Treatment_Arm=="niraparib"], main = "PD.L1_pre (Niraparib)")
+qqline(PD.L1_pre[Treatment_Arm=="niraparib"])
+qqnorm(PD.L1_pre[Treatment_Arm=="Rucaparib"], main = "PD.L1_pre (Rucaparib)")
+qqline(PD.L1_pre[Treatment_Arm=="Rucaparib"])
+
+boxplot(PD.L1_pre~ Treatment_Arm)
+
+plot(density(PD.L1_pre[Treatment_Arm=="niraparib"]), main = "PD.L1_pre (Niraparib)")
+plot(density(PD.L1_pre[Treatment_Arm=="Rucaparib"]), main = "PD.L1_pre (Rucaparib)")
+
+#CTLA4
+hist(CTLA.4_pre[Treatment_Arm=="niraparib"], main = "CTLA.4_pre (Niraparib)")
+hist(CTLA.4_pre[Treatment_Arm=="Rucaparib"], main = "CTLA.4_pre (Rucaparib)")
+
+qqnorm(CTLA.4_pre[Treatment_Arm=="niraparib"], main = "CTLA.4_pre (Niraparib)")
+qqline(CTLA.4_pre[Treatment_Arm=="niraparib"])
+qqnorm(CTLA.4_pre[Treatment_Arm=="Rucaparib"], main = "CTLA.4_pre (Rucaparib)")
+qqline(CTLA.4_pre[Treatment_Arm=="Rucaparib"])
+
+boxplot(CTLA.4_pre ~ Treatment_Arm)
+
+plot(density(CTLA.4_pre[Treatment_Arm=="niraparib"]), main = "PD.L1_pre (Niraparib)")
+plot(density(CTLA.4_pre[Treatment_Arm=="Rucaparib"]), main = "PD.L1_pre (Rucaparib)")
+
+#SIRP
+hist(SIRP_pre[Treatment_Arm=="niraparib"], main = "SIRP_pre (Niraparib)")
+hist(SIRP_pre[Treatment_Arm=="Rucaparib"], main = "SIRP_pre (Rucaparib)")
+
+qqnorm(SIRP_pre[Treatment_Arm=="niraparib"], main = "SIRP_pre (Niraparib)")
+qqline(SIRP_pre[Treatment_Arm=="niraparib"])
+qqnorm(SIRP_pre[Treatment_Arm=="Rucaparib"], main = "SIRP_pre (Rucaparib)")
+qqline(SIRP_pre[Treatment_Arm=="Rucaparib"])
+
+boxplot(SIRP_pre ~ Treatment_Arm)
+
+plot(density(SIRP_pre[Treatment_Arm=="niraparib"]), main = "SIRP_pre (Niraparib)")
+plot(density(SIRP_pre[Treatment_Arm=="Rucaparib"]), main = "SIRP_pre (Rucaparib)")
+
+#Shapiro Tests
+s_test_results <- c(shapiro.test(PD.1_pre[Treatment_Arm=="niraparib"])$p.value,
+                    shapiro.test(PD.1_pre[Treatment_Arm=="Rucaparib"])$p.value,
+                    shapiro.test(PD.L1_pre[Treatment_Arm=="niraparib"])$p.value,
+                    shapiro.test(PD.L1_pre[Treatment_Arm=="Rucaparib"])$p.value,
+                    shapiro.test(CTLA.4_pre[Treatment_Arm=="niraparib"])$p.value,
+                    shapiro.test(CTLA.4_pre[Treatment_Arm=="Rucaparib"])$p.value,
+                    shapiro.test(SIRP_pre[Treatment_Arm=="niraparib"])$p.value,
+                    shapiro.test(SIRP_pre[Treatment_Arm=="Rucaparib"])$p.value)
+
+s_test_table <- matrix(s_test_results, nrow = 2)
+colnames(s_test_table) <- c("PD1", "PDL1", "CTLA4", "SIRP")
+rownames(s_test_table) <- c("Niraparib", "Rucaparib")
+
+t.test(PD.1_pre ~ Treatment_Arm, var.equal = T)
+t.test(PD.L1_pre ~ Treatment_Arm, var.equal = T)
+wilcox.test(CTLA.4_pre~Treatment_Arm)
+wilcox.test(SIRP_pre~Treatment_Arm)
+
+############################## Q2 ######################################
+
+# Make a contingency table
+contingency_table <- table(Treatment_Response, ER_status)
+
+# Perform chi square test
+chi_test_result <- chisq.test(contingency_table)
+
+# Observe residuals
+residuals(chi_test_result)
+
+############################## Q3 ######################################
+
+library(reshape2)
+ruca_data <- parp_dataset[Treatment_Arm=="Rucaparib",]
+
+ruca_data <- ruca_data[,c(1,7:10)]
+
+long_data <- melt(ruca_data, id.vars = "Patient_number")
+
+kruskal.test(value ~ variable, data = long_data)
+
+# Perform a post-hoc test
+library(FSA)
+dunnTest(value ~ variable, data = long_data, method="bh")
