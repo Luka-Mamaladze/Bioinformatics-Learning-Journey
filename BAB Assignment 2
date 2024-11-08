@@ -1,0 +1,96 @@
+parp_dataset <- read.csv("Assignment_2_dataset.csv")
+attach(parp_dataset)
+
+######################################## Q1 ########################################
+shapiro.test(PD.1_post[Treatment_Arm=="niraparib"])$p.value
+shapiro.test(PD.1_post[Treatment_Arm=="Rucaparib"])$p.value
+shapiro.test(PD.L1_post[Treatment_Arm=="niraparib"])$p.value
+shapiro.test(PD.L1_post[Treatment_Arm=="Rucaparib"])$p.value
+
+hist(PD.1_post[Treatment_Arm=="niraparib"], main = "PD.1_pre (Niraparib)")
+hist(PD.1_post[Treatment_Arm=="Rucaparib"], main = "PD.1_pre (Rucaparib)")
+
+qqnorm(PD.1_post[Treatment_Arm=="niraparib"], main = "PD.1_pre (Niraparib)")
+qqline(PD.1_post[Treatment_Arm=="niraparib"])
+qqnorm(PD.1_post[Treatment_Arm=="Rucaparib"], main = "PD.1_pre (Rucaparib)")
+qqline(PD.1_post[Treatment_Arm=="Rucaparib"])
+
+boxplot(PD.1_post ~ Treatment_Arm)
+
+plot(density(PD.1_post[Treatment_Arm=="niraparib"]), main = "PD.1_pre (Niraparib)")
+plot(density(PD.1_post[Treatment_Arm=="Rucaparib"]), main = "PD.1_pre (Rucaparib)")
+
+wilcox.test(PD.1_pre, PD.1_post, paired=T)
+wilcox.test(PD.L1_pre, PD.L1_post, paired=T)
+wilcox.test(CTLA.4_pre, CTLA.4_post, paired=T)
+wilcox.test(SIRP_pre, SIRP_post, paired=T)
+
+wilcox_test_results <- c(wilcox.test(PD.1_pre, PD.1_post, paired=T)$p.value,
+                    wilcox.test(PD.L1_pre, PD.L1_post, paired=T)$p.value,
+                    wilcox.test(CTLA.4_pre, CTLA.4_post, paired=T)$p.value,
+                    wilcox.test(SIRP_pre, SIRP_post, paired=T)$p.value)
+
+######################################## Q2 ########################################
+
+bmi_data <- parp_dataset[,c("Patient_number","BMI_pre_treatment", "BMI_post_treatment")]
+
+for (i in 1:nrow(bmi_data)){
+  if(bmi_data[i,2] < 20){
+    bmi_data[i,4] <- 0
+  } else (bmi_data[i,4] <- 1)
+  
+  if(bmi_data[i,3] < 20){
+    bmi_data[i,5] <- 0
+  } else (bmi_data[i,5] <- 1)
+}
+
+colnames(bmi_data)[4:5] <- c("Before weight", "After weight")
+
+nbna <- 0
+nbua <- 0
+ubna <- 0
+ubua <- 0
+
+for (i in 1:nrow(bmi_data)){
+  if (bmi_data[i,4] == 1 && bmi_data[i,5] == 1){
+    nbna <- nbna + 1
+  }
+  
+  if (bmi_data[i,4] == 1 && bmi_data[i,5] == 0){
+    nbua <- nbua + 1
+  }
+  
+  if (bmi_data[i,4] == 0 && bmi_data[i,5] == 1){
+    ubna <- ubna + 1
+  }
+  
+  if (bmi_data[i,4] == 0 && bmi_data[i,5] == 0){
+    ubua <- ubua + 1
+  }
+}
+
+weight_data<- c(ubua, ubna, nbua,nbna)
+bmi_matrix <- matrix(weight_data, nrow=2)
+
+colnames(bmi_matrix) <- c("Under Weight Before", "Normal weight Before")
+rownames(bmi_matrix) <- c("Under Weight After", "Normal weight After")
+
+mcnemar.test(bmi_matrix)
+
+# 3.	Is there a statistically significant difference between the expression
+# levels of the 4 immune checkpoint proteins over the course of the trial 
+# (3 time points, pre, during and post), and where does that difference lie?
+
+to_melt <- parp_dataset[,c(1,7:18)]
+
+library(reshape2)
+melted <- melt(to_melt, id.vars = "Patient_number")
+
+friedman.test(y = melted$value, 
+              groups = melted$variable, 
+              blocks = melted$Patient_number)
+
+library(PMCMRplus)
+frdAllPairsConoverTest(y = melted$value, 
+                       groups = melted$variable, 
+                       blocks = melted$Patient_number)
