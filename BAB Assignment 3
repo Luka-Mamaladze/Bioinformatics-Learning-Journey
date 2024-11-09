@@ -41,6 +41,13 @@ wilcox.test(wilcox_data$PDL1_Fold_Change ~ wilcox_data$Treatment_Arm)
 wilcox.test(wilcox_data$CTLA4_Fold_Change ~ wilcox_data$Treatment_Arm)
 wilcox.test(wilcox_data$SIRP_Fold_Change ~ wilcox_data$Treatment_Arm)
 
+# Boxplots
+par(mfrow=c(1,4))
+boxplot(wilcox_data$PD1_Fold_Change ~ wilcox_data$Treatment_Arm, main = "PD1")
+boxplot(wilcox_data$PDL1_Fold_Change ~ wilcox_data$Treatment_Arm, main = "PDL1")
+boxplot(wilcox_data$CTLA4_Fold_Change ~ wilcox_data$Treatment_Arm, main = "CTLA4")
+boxplot(wilcox_data$SIRP_Fold_Change ~ wilcox_data$Treatment_Arm, main = "SIRP")
+
 # Calculate Cohen D values
 b <- cohen.d(wilcox_data$PDL1_Fold_Change ~ wilcox_data$Treatment_Arm)
 c <- cohen.d(wilcox_data$CTLA4_Fold_Change ~ wilcox_data$Treatment_Arm)
