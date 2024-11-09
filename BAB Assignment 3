@@ -1,0 +1,155 @@
+################################## Q1 #####################################
+library(sjstats)
+library(effsize)
+library(pwr)
+
+parp_data <- read.csv("Assignment_3_dataset.csv")
+attach(parp_data)
+
+# Calculate Cohen D values
+cohen_d_PDL1 <- cohen.d(PD.L1_pre[Treatment_Arm == "niraparib"], PD.L1_pre[Treatment_Arm == "Rucaparib"])
+cohen_d_CTLA <- cohen.d(CTLA.4_pre[Treatment_Arm == "niraparib"], CTLA.4_pre[Treatment_Arm == "Rucaparib"])
+cohen_d_SIRP <- cohen.d(SIRP_pre[Treatment_Arm == "niraparib"], SIRP_pre[Treatment_Arm == "Rucaparib"])
+
+# Calculate power
+pwr.t.test(d = cohen_d_PDL1$estimate, sig.level = 0.05, power = 0.8)
+pwr.t.test(d = cohen_d_CTLA$estimate, sig.level = 0.05, power = 0.8)
+pwr.t.test(d = cohen_d_SIRP$estimate, sig.level = 0.05, power = 0.8)
+
+################################## Q2 #####################################
+
+# Subset data
+wilcox_data <- parp_data[,c(3, 7:10, 15:18)]
+
+# Calculate fold change in proteins and assign to new column
+for (i in 1:nrow(wilcox_data)){
+  wilcox_data[i,10] <- wilcox_data[i,6] / wilcox_data[i,2]
+  
+  wilcox_data[i,11] <- wilcox_data[i,7] / wilcox_data[i,3]
+  
+  wilcox_data[i,12] <- wilcox_data[i,8] / wilcox_data[i,4]
+  
+  wilcox_data[i,13] <- wilcox_data[i,9] / wilcox_data[i,5]
+}
+
+# Name columns appropriately
+colnames(wilcox_data)[10:13] <- c("PD1_Fold_Change", "PDL1_Fold_Change", "CTLA4_Fold_Change", "SIRP_Fold_Change")
+
+# Perform Wilcoxon tests
+wilcox.test(wilcox_data$PD1_Fold_Change ~ wilcox_data$Treatment_Arm)
+wilcox.test(wilcox_data$PDL1_Fold_Change ~ wilcox_data$Treatment_Arm)
+wilcox.test(wilcox_data$CTLA4_Fold_Change ~ wilcox_data$Treatment_Arm)
+wilcox.test(wilcox_data$SIRP_Fold_Change ~ wilcox_data$Treatment_Arm)
+
+# Calculate Cohen D values
+b <- cohen.d(wilcox_data$PDL1_Fold_Change ~ wilcox_data$Treatment_Arm)
+c <- cohen.d(wilcox_data$CTLA4_Fold_Change ~ wilcox_data$Treatment_Arm)
+d <- cohen.d(wilcox_data$SIRP_Fold_Change ~ wilcox_data$Treatment_Arm)
+
+# Calculate power
+library(pwr)
+pwr.t.test(d = b$estimate, sig.level = 0.05, power = 0.8)
+pwr.t.test(d = c$estimate, sig.level = 0.05, power = 0.8)
+pwr.t.test(d = d$estimate, sig.level = 0.05, power = 0.8)
+
+################################## Q3 #####################################
+
+# Subset data
+bmi_data <- parp_data[,c(3,5,6)]
+ruca_bmi <- subset(bmi_data, Treatment_Arm == "Rucaparib")
+nira_bmi <- subset(bmi_data, Treatment_Arm == "niraparib")
+
+# Create placeholder vectors
+ruca_ubua <- 0
+ruca_ubna <- 0
+ruca_nbna <- 0
+ruca_nbua <- 0
+
+nira_ubua <- 0
+nira_ubna <- 0
+nira_nbna <- 0
+nira_nbua <- 0
+
+# Assign 1 and 0 for normal weight and underweight
+for (i in 1:nrow(ruca_bmi)){
+  if(ruca_bmi[i,2] < 20){
+    ruca_bmi[i,2] <- 0
+  } else (ruca_bmi[i,2] <- 1)
+  
+  if(ruca_bmi[i,3] < 20){
+    ruca_bmi[i,3] <- 0
+  } else (ruca_bmi[i,3] <- 1)
+}
+
+# Assign 1 and 0 for normal weight and underweight
+for (i in 1:nrow(nira_bmi)){
+  if(nira_bmi[i,2] < 20){
+    nira_bmi[i,2] <- 0
+  } else (nira_bmi[i,2] <- 1)
+  
+  if(nira_bmi[i,3] < 20){
+    nira_bmi[i,3] <- 0
+  } else (nira_bmi[i,3] <- 1)
+}
+
+# Count groups for Rucaparib treatment arm
+for (i in 1:nrow(ruca_bmi)){
+  if (ruca_bmi[i,2] == 1 && ruca_bmi[i,3] == 1){
+    ruca_nbna <- ruca_nbna + 1
+  }
+  
+  if (ruca_bmi[i,2] == 1 && ruca_bmi[i,3] == 0){
+    ruca_nbua <- ruca_nbua + 1
+  }
+  
+  if (ruca_bmi[i,2] == 0 && ruca_bmi[i,3] == 1){
+    ruca_ubna <- ruca_ubna + 1
+  }
+  
+  if (ruca_bmi[i,2] == 0 && ruca_bmi[i,3] == 0){
+    ruca_ubua <- ruca_ubua + 1
+  }
+}
+
+# Count groups for Niraparib treatment arms
+for (i in 1:nrow(nira_bmi)){
+  if (nira_bmi[i,2] == 1 && nira_bmi[i,3] == 1){
+    nira_nbna <- nira_nbna + 1
+  }
+  
+  if (nira_bmi[i,2] == 1 && nira_bmi[i,3] == 0){
+    nira_nbua <- nira_nbua + 1
+  }
+  
+  if (nira_bmi[i,2] == 0 && nira_bmi[i,3] == 1){
+    nira_ubna <- nira_ubna + 1
+  }
+  
+  if (nira_bmi[i,2] == 0 && nira_bmi[i,3] == 0){
+    nira_ubua <- nira_ubua + 1
+  }
+}
+
+# Create vector for matrix
+ruca_bmi_data <- c(ruca_ubua, ruca_nbua, ruca_ubna, ruca_nbna)
+nira_bmi_data <- c(nira_ubua, nira_nbua, nira_ubna, nira_nbna)
+
+# Create matrix
+ruca_bmi_table <- matrix(ruca_bmi_data, nrow = 2)
+nira_bmi_table <- matrix(nira_bmi_data, nrow = 2)
+
+# Name appropriately
+rownames(ruca_bmi_table) <- c("Underweight Before", "Normal Weight Before")
+colnames(ruca_bmi_table) <- c("Underweight After", "Normal Weight After")
+
+rownames(nira_bmi_table) <- c("Underweight Before", "Normal Weight Before")
+colnames(nira_bmi_table) <- c("Underweight After", "Normal Weight After")
+
+# Run McNemar's test
+mcnemar.test(ruca_bmi_table)
+mcnemar.test(nira_bmi_table)
+
+################################## Q4 #####################################
+
+h <- ES.h(0.23,0.31)
+pwr.2p.test(h = h, power = 0.8, sig.level = 0.05, alternative = "two.sided")
