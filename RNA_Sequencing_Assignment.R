@@ -5,7 +5,7 @@ library(NMF)
 library(ggplot2)
 library(clusterProfiler)
 
-#### Import Data DONE ####
+#### Import Data ####
 load("D:/Assignments/CB1/RNA_Assignment/gene.Rdata")
 load("D:/Assignments/CB1/RNA_Assignment/norm.RData")
 
@@ -35,6 +35,7 @@ for (i in 1:3){
   sampleNames <- c(sampleNames, nameDMSO)
 }
 
+# Create the metadata for running the DGE
 colnames(Counts) <- sort(sampleNames)
 Counts <- Counts[,c(1,2,3,4,6)]
 metadata <- data.frame(
@@ -43,52 +44,65 @@ metadata <- data.frame(
 )
 
 #### Process Counts Data ####
+# Create DESeq object
 deseqRaw <- DESeqDataSetFromMatrix(countData = Counts, 
                                    colData = metadata,
                                    design = ~ c("Treated", "Treated", "Treated", "Control", "Control"))
-
+# Remove reads with no expression and normalise
 deseqRaw <- deseqRaw[ rowSums(counts(deseqRaw)) > 0, ]
 deseqNorm <- estimateSizeFactors(deseqRaw)
 
+# Transform the data to look for normality and outliers
 countsNorm <- counts(deseqNorm, normalized = T)
 deseqRlog <- rlog(deseqNorm, blind = T)
 normalizedCountsRlog <- assay(deseqRlog)
 logNormCounts <- log2(countsNorm + 1)
 
+# Hierarchical clustering object
 distanceRlog <- as.dist(1- cor(normalizedCountsRlog, method = "spearman"))
 
+# Make the Control condition the baseline
 colData(deseqRaw)$condition <- relevel(colData(deseqRaw)$condition, "Control")
 
+# Create DESeq matrix and store results
 deseqRawMatrix <- DESeq(deseqRaw)
 deseqDgeResults <- results(deseqRawMatrix, independentFiltering = T, alpha = 0.05)
 
 #### Data Summaries #####
 
+# Summaries data from the raw matrix
 colData (deseqRaw) %>% head
 assay (deseqRaw, "counts") %>% head
 rowData (deseqRaw) %>% head
 counts (deseqRaw) %>% str
 
+# These values should all be true
 colSums (counts(deseqRaw)) == colSums (Counts)
 
 sizeFactors(deseqNorm)
 colData (deseqNorm) %>% head 
 
 #### Visualise Data #####
+# Visualise the normalisation and trnasformation
 plot(logNormCounts[,1:2], cex = 1, main = "Normalized and Log2 Transformed")
 plot(normalizedCountsRlog[,1:2], cex = 1, main = "Regularised Log-Transformed (Rlog)")
 
+# Create a hierachical clustering plot and PCA
 plot(hclust(distanceRlog), labels = colnames(normalizedCountsRlog))
 pcaPlot <- plotPCA(deseqRlog)
 pcaPlot
 
+# Create histograms and MA plots
 hist(deseqDgeResults$padj, main = "Histogram of padj from the DGE results")
 DESeq2::plotMA(deseqDgeResults[deseqDgeResults$baseMean > 15,], 
                alpha = 0.05, ylim = c(-3,5), main = "MA-Plot of DEgenes")
+
+# Summaries results
 summary(deseqDgeResults)
 head (deseqDgeResults)
 table (deseqDgeResults$padj < 0.05)
 
+# Create heatmap variables and heatmap
 heatmapGenes <- logNormCounts[!is.na(deseqDgeResults$padj) 
                               & deseqDgeResults$baseMean > 15
                               & deseqDgeResults$padj < 0.05, ]
@@ -101,6 +115,7 @@ aheatmap(heatmapGenes, Rowv = NA, Colv = NA)
 aheatmap(top20Genes, Rowv = NA, Colv = NA)
 rownames(top20Genes)
 
+# Create a volcano plot which labels significant and non significant genes different colours
 volcano <- deseqDgeResults[!is.na(deseqDgeResults$padj),]
 volcano$significance <- ifelse(volcano$padj < 0.05, "Significant", "Not Significant")
 
@@ -117,6 +132,7 @@ ggplot(volcano, aes(x = log2FoldChange, y = -log10(padj), color = significance))
     legend.title = element_blank())
 
 #### Explore DGE ####
+# This section manipulates the DEGs to view most significant results
 sortedDeseqDgeResults <- deseqDgeResults[order(deseqDgeResults$padj), ]
 degenesPadjDeseq <- subset(sortedDeseqDgeResults, padj < 0.05)
 degenesPadjLogDeseq <- subset(sortedDeseqDgeResults,
@@ -130,7 +146,7 @@ underTop5 <- head(sortLog, 6)
 rownames(overTop5)
 rownames(underTop5)
 
-
+# Visualise the change in expression for a particular gene, in this case TP53
 plotCounts(dds = deseqRaw,
            gene = "TP53",
            normalized = T, transform = F)
@@ -138,6 +154,7 @@ plotCounts(dds = deseqRaw,
 deseqDgeResults["TP53",]
 
 #### Geneset Enrichment #####
+# Create table for GSEA
 testGSEA <- deseqDgeResults[order(-deseqDgeResults$stat),]
 testGSEA <- data.frame(rownames(testGSEA), testGSEA[,"stat"])
 
