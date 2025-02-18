@@ -145,3 +145,18 @@ write.table(testGSEA, "ranking.rnk",
             sep = "\t", 
             col.names = F,
             row.names = F)
+
+#### Pathway Enrichment #####
+design <- model.matrix(~ 0+factor(c(rep(1,3),rep(2,3))))
+colnames(design) <- c("DMSO", "APR")
+contrast.matrix <- makeContrasts(APR-DMSO, levels=design)
+v <- voom(y, design)
+fit <- lmFit(v, design)
+fit2 <- contrasts.fit(fit, contrast.matrix)
+fit3 <- eBayes(fit2)
+topTable(fit3)
+topTable(fit3,number=1000,lfc=1.2,p.value=0.05)
+
+de <- topTreat(fit3, number=1000,p.value=0.05)[,1]
+yy <- enrichKEGG(de, pvalueCutoff=0.05)
+head(yy)
