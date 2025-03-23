@@ -76,7 +76,6 @@ plot(1:10, accuracy_values,
      ylab = "Accuracy", 
      main = "Accuracy vs. mtry")
 
-
 #### Question 4 ####
 
 # Retrain data with a 50/50 split
@@ -86,7 +85,6 @@ test_data <- covid_data[-trainSet, ]
 
 # Create random forest 
 model_rf_50 <- randomForest(deceased ~ ., data = train_data, ntree = 100, importance = T)
-
 
 # Generate Predictions
 predictions_rf_50 <- predict(model_rf_50, newdata = test_data, type = "class")
