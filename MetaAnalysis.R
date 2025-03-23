@@ -9,8 +9,6 @@ library(meta)
 library(ggplot2)
 
 #### Setup ####
-setwd("D:/Assignments/CB2/Meta Analysis")
-setwd("C:/Users/luka_/Downloads/Meta Analysis")
 data <- read.csv("C:/Users/luka_/Downloads/Meta Analysis/Meta_analysis_dataset_v2.csv")
 data <- read.csv("D:/Assignments/CB2/Meta Analysis/Meta_analysis_dataset_v2.csv")
 # Check for NA values and remove NA values
@@ -107,9 +105,9 @@ summary(hetero_test)
 ### generate the forest plot
 colnames(x)<-c("LOG(HR)","SE(LOG(HR))","HR","CI:2.5","CI:97.5")
 
-y<-c(0,0,as.matrix(exp(summary(opt_model)$coefficients)),exp(confint(opt_model)))
+y<-c(0,0,as.matrix(exp(summary(surv_model)$coefficients)),exp(confint(surv_model)))
 z<-rbind(x,y)
-row.names(z)<-c("study 1","study 2","study 3","study 4","study 5","study 6","Total")
+row.names(z)<-c("Hospital 1","Hospital 2","Hospital 3","Hospital 4","Hospital 5","Hospital 6","Total")
 
 ggplot(data=as.data.frame(z), aes(y=1:7, x=HR,
                                   xmin=z[,4], 
