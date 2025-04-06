@@ -1,0 +1,119 @@
+#### Data Prep ####
+if(TRUE){
+  library(ggplot2)
+  library(readxl)
+  library(MissMech)
+  library(tableone)
+  library(mice)
+  library(pwr)
+  library(car)
+  library(ggpubr)
+  library(rpart)
+  library(rpart.plot)
+  library(caret)
+  library(randomForest)
+}
+
+df <- read_excel("Dataset_1.xlsx", sheet = 3) 
+df$group <- as.factor(df$group)
+df$sex <- as.factor(df$sex)
+df$migraine <- as.factor(df$migraine)
+
+df <- df[!is.na(df$gen1), ] # ID 509 removed
+
+df <- df[!(df$withdrawal_reason %in% c("intercurrent illness", "died")), ]
+
+temp_data <- mice(df, method = "pmm", m = 5, matix = 50, seed = 100)
+df_imputed <- complete(temp_data)
+
+df[,"pk5"] <- df_imputed[,"pk5"]
+df[,"gen5"] <- df_imputed[,"gen5"]
+df[,"painmedspk5"] <- df_imputed[,"painmedspk5"]
+df[,"pchange"] <- (df[,"pk1"] - df[,"pk5"]) / df[,"pk1"]
+df$response <- ifelse(df[,"pchange"] > 0.35, 1, 0)
+
+imp_df <- df
+df <- read_excel("Dataset_1.xlsx", sheet = 3) 
+
+#### 1a ####
+# What is the effect of acupuncture on chronic headaches?
+
+table(df$group, df$response, dnn = c("Treatment Group", "Response"))
+chisq_test <- chisq.test(table(df$group, df$response))
+w_original <- sqrt(chisq_test$statistic / sum(table(df$group, df$response)))
+
+table(imp_df$group, imp_df$response)
+chisq_test_imp <- chisq.test(table(imp_df$group, imp_df$response))
+w_imputed <- sqrt(chisq_test_imp$statistic / sum(table(imp_df$group, imp_df$response)))
+
+w_original
+w_imputed
+
+#### 1b ####
+# Does it work the same way for migraine and other types of chronic headaches?
+fisher_group0 <- fisher.test(table(df[df$group == 0, ]$migraine, df[df$group == 0, ]$response))
+print(fisher_group0)
+
+fisher_group0 <- fisher.test(table(imp_df[imp_df$group == 0, ]$migraine, imp_df[imp_df$group == 0, ]$response))
+print(fisher_group0)
+
+fisher_group1 <- fisher.test(table(df[df$group == 1, ]$migraine, df[df$group == 1, ]$response))
+print(fisher_group1)
+
+fisher_group1 <- fisher.test(table(imp_df[imp_df$group == 1, ]$migraine, imp_df[imp_df$group == 1, ]$response))
+print(fisher_group1)
+
+summary(glm(response ~ migraine * group, family="binomial", data = df))
+
+#### 1c ####
+# What is the effect of gender on overall efficacy of acupuncture? 
+
+chisq_test1 <- chisq.test(table(imp_df[imp_df$group == 1, ]$sex, 
+                                imp_df[imp_df$group == 1, ]$response))
+print(chisq_test1)
+
+x <- glm(sex ~ response + gen5*gen1 + painmedspk5*painmedspk1 + pk5*pk1, family = "binomial", data = imp_df)
+summary(x)
+
+#### 1d ####
+# Does acupuncture influence general health and packs of medications beside headache overall?
+
+shapiro.test(df$gen5 - df$gen1)
+shapiro.test(df$painmedspk5 - df$painmedspk1)
+shapiro.test(imp_df$gen5 - imp_df$gen1)
+shapiro.test(imp_df$painmedspk5 - imp_df$painmedspk1)
+
+wilcox.test(df$gen5[df$group==1], df$gen1[df$group==1], paired = TRUE, alternative = "l")
+wilcox.test(df$painmedspk5[df$group==1], df$painmedspk1[df$group==1], paired = TRUE, alternative = "l")
+
+wilcox.test(df$gen5[df$group==0], df$gen1[df$group==0], paired = TRUE, alternative = "l")
+wilcox.test(df$painmedspk5[df$group==0], df$painmedspk1[df$group==0], paired = TRUE, alternative = "l")
+
+par(mfrow = c(2, 2))
+
+boxplot(df[df$group == 1, ]$painmedspk1, df[df$group == 1, ]$painmedspk5,
+        names = c("painmedspk1", "painmedspk5"),
+        main = "Comparison of painmedspk1 and painmedspk5 for Group 1",
+        ylab = "Pain Medication Scores",
+        col = c("lightblue", "lightgreen"))
+
+boxplot(df[df$group == 0, ]$painmedspk1, df[df$group == 0, ]$painmedspk5,
+        names = c("painmedspk1", "painmedspk5"),
+        main = "Comparison of painmedspk1 and painmedspk5 for Group 0",
+        ylab = "Pain Medication Scores",
+        col = c("lightblue", "lightgreen"))
+
+boxplot(df[df$group == 1, ]$gen1, df[df$group == 1, ]$gen5,
+        names = c("gen1", "gen5"),
+        main = "Comparison of gen1 and gen5 for Group 1",
+        ylab = "Pain Medication Scores",
+        col = c("lightblue", "lightgreen"))
+
+boxplot(df[df$group == 0, ]$gen1, df[df$group == 0, ]$gen5,
+        names = c("gen1", "gen5"),
+        main = "Comparison of gen1 and gen5 for Group 0",
+        ylab = "Pain Medication Scores",
+        col = c("lightblue", "lightgreen"))
+
+summary(glm(group ~ painmedspk5 * painmedspk1, family = "binomial", data = imp_df))
+summary(glm(group ~ gen5 * gen1, family = "binomial", data = imp_df))
